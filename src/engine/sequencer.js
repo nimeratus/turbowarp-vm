@@ -108,7 +108,8 @@ class Sequencer {
         // Start counting toward WORK_TIME.
         this.timer.start();
 
-        if(this.subtick.isFinished) {
+        const wasFinished = this.subtick.isFinished;
+        if(wasFinished) {
             // If we managed to get to the end of the thread list in the last frame, start a new subtick
             this.subtick.init(this.runtime.threads, true);
         
@@ -213,10 +214,12 @@ class Sequencer {
             // 1. We must have threads in the list, and some must be active.
             // 2. Time elapsed must be less than WORK_TIME.
             // 3. Either turbo mode, or no redraw has been requested by a primitive.
+            // 4. The finished subtick started in the current frame
         } while (this.runtime.threads.length > 0 &&
-               this.subtick.numActiveThreads > 0 &&
-               this.timer.timeElapsed() < WORK_TIME &&
-               (this.runtime.turboMode || !this.runtime.redrawRequested));
+                this.subtick.numActiveThreads > 0 &&
+                this.timer.timeElapsed() < WORK_TIME &&
+                (this.runtime.turboMode || !this.runtime.redrawRequested) &&
+                wasFinished);
 
         if(this.subtick.isFinished) {
             this.activeThread = null;
