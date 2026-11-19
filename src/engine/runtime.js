@@ -2544,7 +2544,7 @@ class Runtime extends EventEmitter {
             this.profiler.start(stepProfilerId);
         }
 
-        if(this.sequencer.subtick.isFinished) {
+        if (this.sequencer.subtick.isFinished) {
             this.emit(Runtime.PULL_IO_DATA);
 
             // Clean up threads that were told to stop during or since the last step

@@ -91,7 +91,7 @@ class VirtualMachine extends EventEmitter {
          */
         this._pendingIO = [];
         this.runtime.on(Runtime.PULL_IO_DATA, () => {
-            for(const {device, data} of this._pendingIO) {
+            for (const {device, data} of this._pendingIO) {
                 this._postIOData(device, data);
             }
             this._pendingIO = [];
@@ -423,7 +423,8 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Post I/O data to the virtual devices through a queue so that it arrives only when all threads have been processed.
+     * Post I/O data to the virtual devices through a queue,
+     * so that it arrives only when all threads have been processed.
      * @param {?string} device Name of virtual I/O device.
      * @param {object} data Any data object to post to the I/O device.
      */

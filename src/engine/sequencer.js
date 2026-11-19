@@ -58,7 +58,15 @@ class Sequencer {
         
         /**
          * keeps track of the state of the current subtick
-         * @type {{isFinished: boolean, isFirst: boolean, didStopThreads: boolean, threads: Thread[], threadIndex: number, numActiveThreads: number, init(threads:Thread[],isFirst?:boolean):void}}
+         * @type {{
+         *  isFinished: boolean,
+         *  isFirst: boolean,
+         *  didStopThreads: boolean,
+         *  threads: Thread[],
+         *  threadIndex: number,
+         *  numActiveThreads: number,
+         *  init(threads:Thread[],isFirst?:boolean):void
+         * }}
          */
         this.subtick = {
             // setting this to true will cause stepThreads to start a new tick
@@ -78,10 +86,10 @@ class Sequencer {
              * @param {Array.<!Thread>} threads the list of the threads to run in this subtick
              * @param {boolean} [isFirst] whether this subtick is the first in the frame
              */
-            init(threads, isFirst) {
-                this.isFinished=false;
-                this.isFirst=isFirst||false;
-                this.threads=threads;
+            init (threads, isFirst) {
+                this.isFinished = false;
+                this.isFirst = isFirst || false;
+                this.threads = threads;
                 this.threadIndex = 0;
                 this.numActiveThreads = 0;
                 this.didStopThreads = false;
@@ -109,7 +117,7 @@ class Sequencer {
         this.timer.start();
 
         const wasFinished = this.subtick.isFinished;
-        if(wasFinished) {
+        if (wasFinished) {
             // If we managed to get to the end of the thread list in the last frame, start a new subtick
             this.subtick.init(this.runtime.threads, true);
         
@@ -130,7 +138,7 @@ class Sequencer {
             }
 
             // If this is not the first subtick in the loop
-            if(this.subtick.isFinished) {
+            if (this.subtick.isFinished) {
                 // Setting isFirst to false prevents running STATUS_YIELD_TICK threads in this subtick
                 this.subtick.init(this.runtime.threads, false);
             }
@@ -154,7 +162,7 @@ class Sequencer {
                     activeThread.status === Thread.STATUS_YIELD) {
                     
                     // Normal-mode thread: step.
-                    if(this.runtime.compilerOptions.warpTimer && this.timer.timeElapsed() > Sequencer.WARP_TIME) {
+                    if (this.runtime.compilerOptions.warpTimer && this.timer.timeElapsed() > Sequencer.WARP_TIME) {
                         // except if the warp timer is exceeded; in that case, stop running threads in this
                         // frame and continue in the next frame
                         break;
@@ -187,7 +195,7 @@ class Sequencer {
                 this.runtime.profiler.stop();
             }
 
-            if(!(this.subtick.threadIndex < this.subtick.threads.length)) {
+            if (!(this.subtick.threadIndex < this.subtick.threads.length)) {
                 // We reached the end of the thread list.
                 // Filter inactive threads from `this.runtime.threads`.
                 if (this.subtick.didStopThreads) {
@@ -219,9 +227,10 @@ class Sequencer {
                 this.subtick.numActiveThreads > 0 &&
                 this.timer.timeElapsed() < WORK_TIME &&
                 (this.runtime.turboMode || !this.runtime.redrawRequested) &&
+                // eslint-disable-next-line no-unmodified-loop-condition
                 wasFinished);
 
-        if(this.subtick.isFinished) {
+        if (this.subtick.isFinished) {
             this.activeThread = null;
         }
 
