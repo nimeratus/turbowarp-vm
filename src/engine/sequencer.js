@@ -104,14 +104,19 @@ class Sequencer {
     stepThreads () {
         // Work time is 75% of the thread stepping interval.
         const WORK_TIME = 0.75 * this.runtime.currentStepTime;
-        // For compatibility with Scatch 2, update the millisecond clock
-        // on the Runtime once per step (see Interpreter.as in Scratch 2
-        // for original use of `currentMSecs`)
-        this.runtime.updateCurrentMSecs();
+
         // Start counting toward WORK_TIME.
         this.timer.start();
 
-        this.subtick.init(this.runtime.threads, true);
+        if(this.subtick.isFinished) {
+            // If we managed to get to the end of the thread list in the last frame, start a new subtick
+            this.subtick.init(this.runtime.threads, true);
+        
+            // For compatibility with Scatch 2, update the millisecond clock
+            // on the Runtime once per step (see Interpreter.as in Scratch 2
+            // for original use of `currentMSecs`)
+            this.runtime.updateCurrentMSecs();
+        }
 
         const doneThreads = [];
         
@@ -146,7 +151,14 @@ class Sequencer {
                 }
                 if (activeThread.status === Thread.STATUS_RUNNING ||
                     activeThread.status === Thread.STATUS_YIELD) {
+                    
                     // Normal-mode thread: step.
+                    if(this.runtime.compilerOptions.warpTimer && this.timer.timeElapsed() > Sequencer.WARP_TIME) {
+                        // except if the warp timer is exceeded; in that case, stop running threads in this
+                        // frame and continue in the next frame
+                        break;
+                    }
+
                     if (this.runtime.profiler !== null) {
                         if (stepThreadProfilerId === -1) {
                             stepThreadProfilerId = this.runtime.profiler.idByName(stepThreadProfilerFrame);
@@ -174,25 +186,28 @@ class Sequencer {
                 this.runtime.profiler.stop();
             }
 
-            // Filter inactive threads from `this.runtime.threads`.
-            if (this.subtick.didStopThreads) {
-                let nextActiveThread = 0;
-                for (let i = 0; i < this.runtime.threads.length; i++) {
-                    const thread = this.runtime.threads[i];
-                    if (thread.stack.length !== 0 &&
-                        thread.status !== Thread.STATUS_DONE) {
-                        this.runtime.threads[nextActiveThread] = thread;
-                        nextActiveThread++;
-                    } else {
-                        this.runtime.threadMap.delete(thread.getId());
-                        doneThreads.push(thread);
+            if(!(this.subtick.threadIndex < this.subtick.threads.length)) {
+                // We reached the end of the thread list.
+                // Filter inactive threads from `this.runtime.threads`.
+                if (this.subtick.didStopThreads) {
+                    let nextActiveThread = 0;
+                    for (let i = 0; i < this.runtime.threads.length; i++) {
+                        const thread = this.runtime.threads[i];
+                        if (thread.stack.length !== 0 &&
+                            thread.status !== Thread.STATUS_DONE) {
+                            this.runtime.threads[nextActiveThread] = thread;
+                            nextActiveThread++;
+                        } else {
+                            this.runtime.threadMap.delete(thread.getId());
+                            doneThreads.push(thread);
+                        }
                     }
+                    this.runtime.threads.length = nextActiveThread;
                 }
-                this.runtime.threads.length = nextActiveThread;
-            }
 
-            // We successfully ticked once. Start a new subtick in the next loop
-            this.subtick.isFinished = true;
+                // We successfully ticked once. Start a new subtick in the next loop
+                this.subtick.isFinished = true;
+            }
 
             // Conditions for continuing to stepping threads:
             // 1. We must have threads in the list, and some must be active.
@@ -203,7 +218,9 @@ class Sequencer {
                this.timer.timeElapsed() < WORK_TIME &&
                (this.runtime.turboMode || !this.runtime.redrawRequested));
 
-        this.activeThread = null;
+        if(this.subtick.isFinished) {
+            this.activeThread = null;
+        }
 
         return doneThreads;
     }

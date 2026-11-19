@@ -2537,20 +2537,22 @@ class Runtime extends EventEmitter {
             this.profiler.start(stepProfilerId);
         }
 
-        // Clean up threads that were told to stop during or since the last step
-        this.threads = this.threads.filter(thread => !thread.isKilled);
-        this.updateThreadMap();
+        if(this.sequencer.subtick.isFinished) {
+            // Clean up threads that were told to stop during or since the last step
+            this.threads = this.threads.filter(thread => !thread.isKilled);
+            this.updateThreadMap();
 
-        // Find all edge-activated hats, and add them to threads to be evaluated.
-        for (const hatType in this._hats) {
-            if (!Object.prototype.hasOwnProperty.call(this._hats, hatType)) continue;
-            const hat = this._hats[hatType];
-            if (hat.edgeActivated) {
-                this.startHats(hatType);
+            // Find all edge-activated hats, and add them to threads to be evaluated.
+            for (const hatType in this._hats) {
+                if (!Object.prototype.hasOwnProperty.call(this._hats, hatType)) continue;
+                const hat = this._hats[hatType];
+                if (hat.edgeActivated) {
+                    this.startHats(hatType);
+                }
             }
+            this.redrawRequested = false;
+            this._pushMonitors();
         }
-        this.redrawRequested = false;
-        this._pushMonitors();
         if (this.profiler !== null) {
             if (stepThreadsProfilerId === -1) {
                 stepThreadsProfilerId = this.profiler.idByName('Sequencer.stepThreads');
