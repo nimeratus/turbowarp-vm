@@ -2510,7 +2510,7 @@ class Runtime extends EventEmitter {
 
         interpolate.interpolate(this, progressInFrame);
 
-        if (this.renderer) {
+        if (this.renderer && this.sequencer.subtick.isFinished) {
             if (this.sampler.enableBasic) this.sampler.pc[0] = Sampler.RENDERER;
             this.renderer.draw();
             if (this.sampler.enableBasic) this.sampler.pc[0] = Sampler.IDLE;
@@ -2594,7 +2594,7 @@ class Runtime extends EventEmitter {
             // tw: do not draw if document is hidden or a rAF loop is running
             // Checking for the animation frame loop is more reliable than using
             // interpolationEnabled in some edge cases
-            if (!document.hidden && !this.frameLoop._interpolationAnimation) {
+            if (!document.hidden && !this.frameLoop._interpolationAnimation && this.sequencer.subtick.isFinished) {
                 if (this.sampler.enableBasic) this.sampler.pc[0] = Sampler.RENDERER;
                 this.renderer.draw();
                 if (this.sampler.enableBasic) this.sampler.pc[0] = Sampler.RUNTIME;
