@@ -672,6 +672,13 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event called before any block is executed, if the sequencer reached the end of the thread list in the last frame.
+     */
+    static get PULL_IO_DATA () {
+        return 'PULL_IO_DATA';
+    }
+
+    /**
      * Event called before any block is executed.
      */
     static get BEFORE_EXECUTE () {
@@ -2538,6 +2545,8 @@ class Runtime extends EventEmitter {
         }
 
         if(this.sequencer.subtick.isFinished) {
+            this.emit(Runtime.PULL_IO_DATA);
+
             // Clean up threads that were told to stop during or since the last step
             this.threads = this.threads.filter(thread => !thread.isKilled);
             this.updateThreadMap();

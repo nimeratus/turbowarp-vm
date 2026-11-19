@@ -85,6 +85,18 @@ class VirtualMachine extends EventEmitter {
          */
         this._dragTarget = null;
 
+        /**
+         * The I/O events that will be sent to the runtime at the start of the next tick.
+         * @type {Array<{device:string|null,data:object}>}
+         */
+        this._pendingIO = [];
+        this.runtime.on(Runtime.PULL_IO_DATA, () => {
+            for(const {device, data} of this._pendingIO) {
+                this._postIOData(device, data);
+            }
+            this._pendingIO = [];
+        });
+
         // Runtime emits are passed along as VM emits.
         this.runtime.on(Runtime.SCRIPT_GLOW_ON, glowData => {
             this.emit(Runtime.SCRIPT_GLOW_ON, glowData);
@@ -404,10 +416,19 @@ class VirtualMachine extends EventEmitter {
      * @param {?string} device Name of virtual I/O device.
      * @param {object} data Any data object to post to the I/O device.
      */
-    postIOData (device, data) {
+    _postIOData (device, data) {
         if (this.runtime.ioDevices[device]) {
             this.runtime.ioDevices[device].postData(data);
         }
+    }
+
+    /**
+     * Post I/O data to the virtual devices through a queue so that it arrives only when all threads have been processed.
+     * @param {?string} device Name of virtual I/O device.
+     * @param {object} data Any data object to post to the I/O device.
+     */
+    postIOData (device, data) {
+        this._pendingIO.push({device, data});
     }
 
     setVideoProvider (videoProvider) {

@@ -168,12 +168,12 @@ class Video {
             renderer.updateDrawableVisible(this._drawable, true);
 
             this._renderPreviewFrame = () => {
-                clearTimeout(this._renderPreviewTimeout);
+                // clearTimeout(this._renderPreviewTimeout);
                 if (!this._renderPreviewFrame) {
                     return;
                 }
 
-                this._renderPreviewTimeout = setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
+                // this._renderPreviewTimeout = setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
 
                 const imageData = this.getFrame({
                     format: Video.FORMAT_IMAGE_DATA,
@@ -190,6 +190,7 @@ class Video {
             };
 
             this._renderPreviewFrame();
+            this.runtime.on(this.runtime.constructor.PULL_IO_DATA, this._renderPreviewFrame);
         }
     }
 
